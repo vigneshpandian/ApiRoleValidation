@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ApiRoleValidation/ApiRoleValidation.csproj" />
+  <Project Path="ApiRoleValidation.Tests/ApiRoleValidation.Tests.csproj" />
+</Solution>

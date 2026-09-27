@@ -1,0 +1,92 @@
+@ApiRoleValidation_HostAddress = https://localhost:7198
+
+### 1. Login as Admin
+# @name adminLogin
+POST {{ApiRoleValidation_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Admin123!"
+}
+
+### Store Token Variables from response
+@adminToken = {{adminLogin.response.body.accessToken}}
+@adminRefreshToken = {{adminLogin.response.body.refreshToken}}
+@adminUserId = {{adminLogin.response.body.userId}}
+
+### 2. Login as User
+# @name userLogin
+POST {{ApiRoleValidation_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "password": "User123!"
+}
+
+@userToken = {{userLogin.response.body.accessToken}}
+
+### 3. Get Current User Info (Admin)
+GET {{ApiRoleValidation_HostAddress}}/api/auth/me
+Authorization: Bearer {{adminToken}}
+
+### 4. Admin - Access Orders (200 OK)
+GET {{ApiRoleValidation_HostAddress}}/api/orders
+Authorization: Bearer {{adminToken}}
+
+### 5. Admin - Access Order Details (200 OK)
+GET {{ApiRoleValidation_HostAddress}}/api/orders/1
+Authorization: Bearer {{adminToken}}
+
+### 6. Admin - Access Order Reports (200 OK)
+GET {{ApiRoleValidation_HostAddress}}/api/reports/orders
+Authorization: Bearer {{adminToken}}
+
+### 7. User - Access Orders (200 OK)
+GET {{ApiRoleValidation_HostAddress}}/api/orders
+Authorization: Bearer {{userToken}}
+
+### 8. User - Access Order Reports (403 Forbidden - Role "User" cannot access Admin reports)
+GET {{ApiRoleValidation_HostAddress}}/api/reports/orders
+Authorization: Bearer {{userToken}}
+
+### 9. Change Role: Demote Admin to User
+# Calling change-role rotates the SecurityStamp in DB and HybridCache,
+# instantly revoking all active access tokens for this user!
+POST {{ApiRoleValidation_HostAddress}}/api/auth/change-role
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "userId": "{{adminUserId}}",
+  "newRole": "User"
+}
+
+### 10. Attempt to Access Order Reports with OLD Admin Token (401 Unauthorized - Instantly Revoked!)
+GET {{ApiRoleValidation_HostAddress}}/api/reports/orders
+Authorization: Bearer {{adminToken}}
+
+### 11. Refresh Token to obtain new access token with updated "User" role
+# @name refreshToken
+POST {{ApiRoleValidation_HostAddress}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "{{adminRefreshToken}}",
+  "accessToken": "{{adminToken}}"
+}
+
+@newAccessToken = {{refreshToken.response.body.accessToken}}
+
+### 12. Access Orders with NEW Token (200 OK)
+GET {{ApiRoleValidation_HostAddress}}/api/orders
+Authorization: Bearer {{newAccessToken}}
+
+### 13. Attempt to Access Reports with NEW Token (403 Forbidden - Role is now "User")
+GET {{ApiRoleValidation_HostAddress}}/api/reports/orders
+Authorization: Bearer {{newAccessToken}}
+
+### 14. Sign Out
+POST {{ApiRoleValidation_HostAddress}}/api/auth/signout
+Authorization: Bearer {{newAccessToken}}

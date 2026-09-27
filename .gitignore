@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/ApiRoleValidation/bin/Debug/net8.0
+/.vs/ApiRoleValidation/CopilotIndices/18.9.1319.62376
+/.vs/ApiRoleValidation.slnx
+/ApiRoleValidation/obj
+/ApiRoleValidation.Tests/bin/Debug
+/ApiRoleValidation.Tests/obj
